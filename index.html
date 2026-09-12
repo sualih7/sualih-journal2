@@ -2,83 +2,366 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Sualih Journal</title>
+  <title>Sualih Journal | Trade Tracker</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    :root{--bg:#0a0a0f;--card:#131318;--c:#00d4ff;--t:#e0e0e0;--m:#888;--w:#04c49c;--l:#ff4757;--g:#1f1f24}
+    :root{
+      --bg:#020617;--surface:#0f172a;--card:#111827;--border:#1e293b;
+      --accent:#00d4ff;--accent-dark:#00b8d4;
+      --win:#04c49c;--loss:#ff4757;--text:#e2e8f0;--muted:#94a3b8;
+      --shadow:0 4px 20px rgba(0,0,0,.3);--glass:rgba(255,255,255,.05)
+    }
     *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:Arial,Helvetica,sans-serif;background:var(--bg);color:var(--t);min-height:100vh}
-    .container{max-width:1200px;margin:0 auto;padding:20px}
-    h1{font-size:2rem;margin-bottom:10px;background:linear-gradient(90deg,var(--c),#4a4aff);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-    .grid{display:grid;gap:20px}
-    .card{background:var(--card);border-radius:12px;padding:20px;transition:transform .2s}
-    .card:hover{transform:translateY(-4px)}
-    .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;text-align:center}
-    .val{color:var(--c);font-size:1.4rem;font-weight:bold}
-    .lbl{color:var(--m);font-size:.8rem}
-    .tbl{border-collapse:collapse;width:100%;font-size:.8rem}
-    .tbl th,.tbl td{padding:8px;border-bottom:1px solid var(--g)}
-    .tbl th{background:var(--g);color:var(--c)}
-    .dz{border:2px dashed var(--c);border-radius:12px;padding:40px;text-align:center;color:var(--m);cursor:pointer;transition:.3s}
-    .dz.drag{border-color:var(--c);background:rgba(0,212,255,.1)}
-    .dz input{display:none}
-    .badge{padding:4px 10px;border-radius:20px;font-size:.75rem;font-weight:bold}
-    .win{background:rgba(4,196,156,.15);color:var(--w)}
-    .loss{background:rgba(255,71,87,.15);color:var(--l)}
+    body{
+      font-family:'Inter',system-ui,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      min-height:100vh;
+      overflow-x:hidden;
+      background:linear-gradient(135deg,#020617 0%,#0a122b 50%,#020617 100%);
+    }
+    .glass{
+      background:var(--glass);
+      backdrop-filter:blur(10px);
+      border:1px solid rgba(255,255,255,.1);
+      border-radius:12px;
+    }
+    .container{max-width:1440px;margin:0 auto;padding:24px}
+    
+    /* Header */
+    .header{
+      display:flex;justify-content:space-between;align-items:center;
+      margin-bottom:24px;padding:16px 0;border-bottom:1px solid var(--border);
+    }
+    .logo{
+      font-size:1.8rem;font-weight:700;
+      background:linear-gradient(90deg,var(--accent),#4a4aff);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+      background-clip:text;
+    }
+    .nav-items{display:flex;gap:24px}
+    .nav-items a{color:var(--muted);font-weight:500;transition:.2s}
+    .nav-items a:hover{color:var(--accent)}
+    
+    /* Stats Grid */
+    .stats-grid{
+      display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+      gap:16px;margin-bottom:24px
+    }
+    .stat-card{
+      background:var(--card);border-radius:12px;padding:20px;
+      text-align:center;position:relative;overflow:hidden;
+    }
+    .stat-card::before{
+      content:'';position:absolute;top:0;left:-100%;width:100%;height:100%;
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,.05),transparent);
+      transition:.5s
+    }
+    .stat-card:hover::before{left:100%}
+    .stat-value{
+      font-size:1.6rem;font-weight:600;margin-bottom:4px;
+      background:linear-gradient(90deg,var(--accent),#4a4aff);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+      background-clip:text;
+    }
+    .stat-label{color:var(--muted);font-size:.8rem}
+    .stat-smaller{font-size:1.2rem}
+    
+    /* Main Grid */
+    .main-grid{
+      display:grid;gap:16px;
+      grid-template-columns:2fr 1fr;
+    }
+    .card{
+      background:var(--card);border-radius:12px;padding:20px;
+      box-shadow:var(--shadow);
+    }
+    .card h2{font-size:1.1rem;font-weight:600;margin-bottom:16px;color:var(--accent)}
+    
+    /* Table */
+    .table{
+      width:100%;border-collapse:collapse;font-size:.85rem;
+    }
+    .table th,.table td{padding:10px 8px;border-bottom:1px solid var(--border)}
+    .table th{
+      background:var(--surface);
+      color:var(--accent);
+      font-weight:500;
+      text-transform:uppercase;font-size:.7rem;letter-spacing:.5px;
+    }
+    .table tr:hover{background:rgba(0,212,255,.03)}
+    .dir-buy{color:var(--win)}.dir-sell{color:var(--loss)}
+    .badge{
+      display:inline-block;padding:2px 8px;border-radius:20px;font-size:.7rem;font-weight:500
+    }
+    .badge-win{background:rgba(4,196,156,.15);color:var(--win)}
+    .badge-loss{background:rgba(255,71,87,.15);color:var(--loss)}
+    
+    /* Dropzone */
+    .dropzone{
+      border:2px dashed var(--accent);border-radius:12px;
+      padding:40px;text-align:center;color:var(--muted);
+      cursor:pointer;transition:.3s;
+    }
+    .dropzone:hover,.dropzone.drag{
+      border-color:var(--accent);background:var(--glass);
+    }
+    .dropzone input{display:none}
+    
+    /* Charts */
+    .chart-equity{
+      height:200px;display:flex;align-items:flex-end;gap:4px;
+      padding:4px 0;
+    }
+    .equity-bar{
+      flex:1;transition:height .4s ease;
+      border-radius:4px 4px 0 0;
+    }
+    
+    /* Alerts */
+    .alert-micro{
+      font-size:.75rem;color:var(--muted);margin-top:4px;
+    }
+    
+    /* Utility */
+    .text-success{color:var(--win)}
+    .text-danger{color:var(--loss)}
+    .text-center{text-align:center}
+    .mt-16{margin-top:16px}
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>🪙 Sualih Journal</h1>
-    <p>Gold / XAUUSD Trade Tracker</p>
-    <div class="stats">
-      <div class="stat"><div id="bal" class="val">$200.00</div><div class="lbl">Balance</div></div>
-      <div class="stat"><div id="pl" class="val">+$0.00</div><div class="lbl">P&L</div></div>
-      <div class="stat"><div id="wr" class="val">0%</div><div class="lbl">Win Rate</div></div>
-      <div class="stat"><div id="pf" class="val">0.0x</div><div class="lbl">Profit Factor</div></div>
-      <div class="stat"><div id="tc" class="val">0</div><div class="lbl">Trades</div></div>
+    <!-- Header -->
+    <div class="header">
+      <div class="logo">Sualih Journal</div>
+      <div class="nav-items">
+        <a href="#import">Import</a>
+        <a href="#stats">Stats</a>
+        <a href="#trades">Trades</a>
+        <a href="#settings">Settings</a>
+      </div>
     </div>
-    <div style="margin-top:20px;display:grid;gap:16px">
-      <div class="card"><h2>📁 Import MT5 CSV</h2><div class="dz" id="dz"><div>📂 Drag CSV here or click</div><input type="file" id="fl"></div><p style="font-size:.8rem;color:var(--m);margin-top:8px">Columns: date, symbol, Buy/Sell, entry, SL, TP, size, profit</p></div>
-      <div class="card"><h2>📊 Equity Curve</h2><div id="eq" style="height:150px;display:flex;align-items:flex-end;gap:4px"></div></div>
+    
+    <p style="color:var(--muted);margin-bottom:16px">Gold / XAUUSD Trade Tracker — Performance at a glance</p>
+    
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card glass">
+        <div class="stat-value stat-smaller" id="balance">$200.00</div>
+        <div class="stat-label">Balance</div>
+      </div>
+      <div class="stat-card glass">
+        <div class="stat-value" id="profit">+ $0.00</div>
+        <div class="stat-label">P&L</div>
+      </div>
+      <div class="stat-card glass">
+        <div class="stat-value" id="wr">0%</div>
+        <div class="stat-label">Win Rate</div>
+      </div>
+      <div class="stat-card glass">
+        <div class="stat-value" id="pf">0.0x</div>
+        <div class="stat-label">Profit Factor</div>
+      </div>
+      <div class="stat-card glass">
+        <div class="stat-value" id="rr">0.00</div>
+        <div class="stat-label">Avg RR</div>
+      </div>
+      <div class="stat-card glass">
+        <div class="stat-value" id="total">0</div>
+        <div class="stat-label">Total Trades</div>
+      </div>
     </div>
-    <div class="card" style="margin-top:24px">
-      <h2>📋 Trades</h2>
-      <table class="tbl"><thead><tr><th>Date</th><th>Symbol</th><th>Dir</th><th>Entry</th><th>SL</th><th>TP</th><th>Size</th><th>P&L</th><th>RR</th></tr></thead><tbody id="tb"></tbody></table>
+    
+    <!-- Main Content -->
+    <div class="main-grid">
+      <!-- Left Column -->
+      <div>
+        <div class="card mt-16" id="import-section">
+          <h2 style="color:var(--accent)">📁 Import MT5 Trades</h2>
+          <div class="dropzone" id="dz">
+            <div style="font-size:2rem;margin-bottom:8px;">📂</div>
+            <div><strong>Drag MT5 CSV here</strong></div>
+            <div class="alert-micro">or click to browse</div>
+            <input type="file" id="fileInput" accept=".csv">
+          </div>
+          <p class="alert-micro mt-16">Supports MT5 Trade History Export format</p>
+        </div>
+        
+        <div class="card mt-16" id="trades-section">
+          <h2 style="color:var(--accent)">📋 Trades</h2>
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Date</th><th>Symbol</th><th>Direction</th>
+                <th>Entry</th><th>SL</th><th>TP</th><th>Size</th>
+                <th>P&L</th><th>RR</th>
+              </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+          </table>
+        </div>
+      </div>
+      
+      <!-- Right Column -->
+      <div>
+        <div class="card mt-16">
+          <h2 style="color:var(--accent)">📊 Equity Curve</h2>
+          <div class="chart-equity" id="eqChart"></div>
+        </div>
+        
+        <div class="card mt-16">
+          <h2 style="color:var(--accent)">⚙️ Settings</h2>
+          <p class="alert-micro">Initial Balance: <strong>$200</strong></p>
+          <button onclick="exportData()" style="padding:8px 16px;border:none;border-radius:6px;background:var(--accent);color:#000;font-weight:600;cursor:pointer;margin-right:8px">📥 Export JSON</button>
+          <button onclick="clearAll()" style="padding:8px 16px;border:none;border-radius:6px;background:rgba(255,71,87,.15);color:var(--loss);font-weight:600;cursor:pointer">🗑️ Clear All</button>
+        </div>
+        
+        <div class="card mt-16">
+          <h2 style="color:var(--accent)">📈 Performance Snapshot</h2>
+          <div id="perf" class="text-center"></div>
+        </div>
+      </div>
     </div>
   </div>
+
   <script>
-    const BAL=200;let trades=JSON.parse(localStorage.sualih||'[]');
-    function r(t){return new Date(t).toLocaleString()}
-    function rr(o,s,t){const r=o-s,p=t-o;return r?+(p/r).toFixed(2):0}
+    const BAL = 200;
+    let trades = JSON.parse(localStorage.getItem('sualih-journal-data') || '[]');
+    
+    function formatTS(ts){
+      const d = new Date(ts);
+      return d.toLocaleString(undefined,{dateStyle:'short',timeStyle:'short'});
+    }
+    
+    function calcRR(entry, sl, tp){
+      const risk = entry - sl;
+      const reward = tp - entry;
+      return risk ? +(reward/risk).toFixed(2) : 0;
+    }
+    
     function render(){
-      let pnl=0,w=0,l=0,rat=0,cum=[BAL];
-      trades.forEach(t=>{pnl+=t.profit;cum.push(cum[cum.length-1]+t.profit);if(t.profit>0)w++;else if(t.profit<0)l++;rat+=rr(t.open_price,t.stop_loss,t.take_profit)});
-      document.getElementById('bal').textContent='$'+(BAL+pnl).toFixed(2);
-      document.getElementById('pl').textContent=(pnl>=0?'+':'')+pnl.toFixed(2);
-      document.getElementById('tc').textContent=trades.length;
-      document.getElementById('wr').textContent=trades.length?Math.round(w/trades.length*100)+'%':'0%';
-      document.getElementById('pf').textContent=l?Math.round(w/l*100)/10+'x':'∞';
-      document.getElementById('eq').innerHTML=cum.map((v,i)=>{const h=Math.abs(v)/Math.max(...cum.map(Math.abs),1)*120+20;const c=v>=BAL?'var(--w)':'var(--l)';return'<div style="height:'+h+'px;width:100%;background:'+c+'"></div>'}).join('');
-      document.getElementById('tb').innerHTML=trades.map(t=>{
-        const dir=t.direction===1?'Buy':'Sell';
-        return '<tr><td>'+r(t.time)+'</td><td>'+(t.symbol||'XAUUSD')+'</td><td>'+dir+'</td><td>'+t.open_price+'</td><td>'+t.stop_loss+'</td><td>'+t.take_profit+'</td><td>'+t.size+'</td><td class="'+(t.profit>=0?'win':'loss')+'">'+t.profit.toFixed(2)+'</td><td>'+rr(t.open_price,t.stop_loss,t.take_profit)+'x</td></tr>';
+      let pnl = 0, wins = 0, losses = 0, totalRR = 0, equity = [BAL];
+      
+      trades.forEach(t => {
+        pnl += t.profit;
+        if(t.profit > 0) wins++;
+        else if(t.profit < 0) losses++;
+        totalRR += calcRR(t.open_price, t.stop_loss, t.take_profit);
+        equity.push(equity[equity.length-1] + t.profit);
+      });
+      
+      const winRate = trades.length ? Math.round(wins/trades.length*100) : 0;
+      const profitFactor = losses ? (wins/Math.abs(losses)).toFixed(2) : '∞';
+      const avgRR = trades.length ? (totalRR/trades.length).toFixed(2) : 0;
+      
+      document.getElementById('balance').textContent = '$' + (BAL+pnl).toFixed(2);
+      document.getElementById('profit').textContent = (pnl >= 0 ? '+ ' : '- ') + Math.abs(pnl).toFixed(2);
+      document.getElementById('wr').textContent = winRate + '%';
+      document.getElementById('pf').textContent = profitFactor;
+      document.getElementById('rr').textContent = avgRR + 'x';
+      document.getElementById('total').textContent = trades.length;
+      
+      // Equity Chart
+      const maxEquity = Math.max(...equity.map(v=>Math.abs(v)), BAL);
+      const eqChart = document.getElementById('eqChart');
+      eqChart.innerHTML = equity.map((v,i)=>{
+        const h = (Math.abs(v) / maxEquity) * 150 + 30;
+        const c = v >= BAL ? 'var(--win)' : 'var(--loss)';
+        return `<div class="equity-bar" style="height:${h}px;background:${c};width:100%;opacity:${i>0?0.8:1}"></div>`;
+      }).join('');
+      
+      // Table
+      document.getElementById('tbody').innerHTML = trades.map(t=>{
+        const dir = t.direction === 1 ? 'Buy' : 'Sell';
+        const dirClass = t.direction === 1 ? 'dir-buy' : 'dir-sell';
+        const pnlClass = t.profit >= 0 ? 'text-success' : 'text-danger';
+        const badgeClass = t.profit >= 0 ? 'badge-win' : 'badge-loss';
+        
+        return `<tr>
+          <td>${formatTS(t.time)}</td>
+          <td>${t.symbol || 'XAUUSD'}</td>
+          <td class="${dirClass}">${dir}</td>
+          <td>${t.open_price}</td>
+          <td>${t.stop_loss}</td>
+          <td>${t.take_profit}</td>
+          <td>${t.size}</td>
+          <td class="${pnlClass}">${t.profit.toFixed(2)}</td>
+          <td><span class="badge ${badgeClass}">${calcRR(t.open_price,t.stop_loss,t.take_profit)}x</span></td>
+        </tr>`;
       }).reverse().join('');
+      
+      // Performance Snapshot
+      const perf = document.getElementById('perf');
+      if(trades.length === 0){
+        perf.innerHTML = '<p class="alert-micro">No trades recorded yet — import your MT5 CSV to begin</p>';
+      } else {
+        perf.innerHTML = `<p class="alert-micro">Daily P&L: <strong>${pnl >= 0 ? '+' : ''}${pnl.toFixed(2)}</strong> | Wins: ${wins} | Losses: ${losses} | Total Trades: ${trades.length}</p>`;
+      }
     }
-    document.getElementById('dz').addEventListener('click',()=>document.getElementById('fl').click());
-    document.getElementById('dz').addEventListener('dragover',e=>{e.preventDefault();document.getElementById('dz').classList.add('drag')});
+    
+    // File handling
+    document.getElementById('dz').addEventListener('click',()=>document.getElementById('fileInput').click());
+    document.getElementById('dz').addEventListener('dragover',e=>{
+      e.preventDefault();
+      document.getElementById('dz').classList.add('drag');
+    });
     document.getElementById('dz').addEventListener('dragleave',()=>document.getElementById('dz').classList.remove('drag'));
-    document.getElementById('dz').addEventListener('drop',e=>{e.preventDefault();document.getElementById('dz').classList.remove('drag');handle(e.dataTransfer.files[0])});
-    document.getElementById('fl').addEventListener('change',e=>{if(e.target.files[0])handle(e.target.files[0])});
-    function handle(f){
-      const r=new FileReader();
-      r.onload=e=>{
-        const lines=e.target.result.trim().split('\n');
-        lines.slice(1).forEach(l=>{const p=l.split(',');trades.push({time:Date.parse(p[0].replace(/\//g,'-')),symbol:p[1],direction:p[2]==='Buy'?1:-1,open_price:+p[3],stop_loss:+p[4],take_profit:+p[5],size:+p[6],profit:+p[7]||0})});
-        trades=trades.slice(-500);localStorage.sualih=JSON.stringify(trades);render()
+    document.getElementById('dz').addEventListener('drop',e=>{
+      e.preventDefault();
+      document.getElementById('dz').classList.remove('drag');
+      handleFile(e.dataTransfer.files[0]);
+    });
+    document.getElementById('fileInput').addEventListener('change',e=>{
+      if(e.target.files[0]) handleFile(e.target.files[0]);
+    });
+    
+    function handleFile(file){
+      const reader = new FileReader();
+      reader.onload = e=>{
+        const content = e.target.result.trim();
+        const lines = content.split('\n');
+        lines.slice(1).forEach(line=>{
+          const cols = line.split(',');
+          if(cols.length >= 8){
+            trades.push({
+              time: Date.parse(cols[0].replace(/\//g,'-')),
+              symbol: cols[1],
+              direction: cols[2] === 'Buy' ? 1 : -1,
+              open_price: +cols[3],
+              stop_loss: +cols[4],
+              take_profit: +cols[5],
+              size: +cols[6],
+              profit: +cols[7] || 0
+            });
+          }
+        });
+        trades = trades.slice(-500);
+        localStorage.setItem('sualih-journal-data', JSON.stringify(trades));
+        render();
       };
-      r.readAsText(f)
+      reader.readAsText(file);
     }
-    render()
+    
+    function exportData(){
+      const blob = new Blob([JSON.stringify(trades,null,2)],{type:'application/json'});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'sualih-trades.json';
+      a.click();
+    }
+    
+    function clearAll(){
+      if(confirm('Clear all trade history? This cannot be undone.')){
+        trades = [];
+        localStorage.removeItem('sualih-journal-data');
+        render();
+      }
+    }
+    
+    // Init
+    render();
   </script>
 </body>
 </html>
